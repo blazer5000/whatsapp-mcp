@@ -1,6 +1,12 @@
 #!/bin/bash
 
 BRIDGE="/Users/aaron/whatsapp-mcp/whatsapp-bridge/whatsapp-bridge"
+
+# Allow outbound media (/api/send) from PCC's upload staging directory.
+# Upstream 0.2.1 restricts media_path to these roots; without this, PCC
+# file sends are rejected with "media_path rejected".
+export WHATSAPP_MEDIA_ROOTS="/Users/aaron/Projects/property-command-centre/data/uploads"
+
 MAX_CRASHES=3
 STABLE_THRESHOLD=60  # seconds — if bridge runs longer than this, reset crash counter
 CRASH_COUNT=0

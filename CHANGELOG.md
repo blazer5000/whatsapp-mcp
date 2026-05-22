@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1](https://github.com/verygoodplugins/whatsapp-mcp/compare/v0.2.0...v0.2.1) (2026-05-14)
+
+
+### Bug Fixes
+
+* **bridge:** log send caller identity ([#96](https://github.com/verygoodplugins/whatsapp-mcp/issues/96)) ([c81947c](https://github.com/verygoodplugins/whatsapp-mcp/commit/c81947cbd4235e827637961b7ec53b47725d5a65))
+* **bridge:** pass message store when sending messages ([#91](https://github.com/verygoodplugins/whatsapp-mcp/issues/91)) ([423ada9](https://github.com/verygoodplugins/whatsapp-mcp/commit/423ada9cd3432fcde79bb388d527a62cd5e8f696))
+* **bridge:** set FileName and detect MIME for document sends ([#95](https://github.com/verygoodplugins/whatsapp-mcp/issues/95)) ([af18908](https://github.com/verygoodplugins/whatsapp-mcp/commit/af18908225767213bfedf970feb68f9a9bd79182))
+* **ci:** make dependabot auto-approve non-fatal ([#65](https://github.com/verygoodplugins/whatsapp-mcp/issues/65)) ([ea0dfb1](https://github.com/verygoodplugins/whatsapp-mcp/commit/ea0dfb179ac0f68815e5a4b6b96058342590c8bd))
+* send and track disappearing-message settings correctly ([#82](https://github.com/verygoodplugins/whatsapp-mcp/issues/82)) ([b250409](https://github.com/verygoodplugins/whatsapp-mcp/commit/b25040985b0e72d87d091d83d0bb64ff7d78eba8))
+* **server:** list_chats/get_chat error when include_last_message=False ([#79](https://github.com/verygoodplugins/whatsapp-mcp/issues/79)) ([31e03e6](https://github.com/verygoodplugins/whatsapp-mcp/commit/31e03e63ddaa5ed2b0037faa7e70cb736addf617))
+
+
+### Documentation
+
+* add contributors section and updating instructions to README ([#67](https://github.com/verygoodplugins/whatsapp-mcp/issues/67)) ([71b0c03](https://github.com/verygoodplugins/whatsapp-mcp/commit/71b0c03070bb2054f45f202590c84d943cb2e4e6))
+* Update SECURITY.md with enhanced security policy ([#78](https://github.com/verygoodplugins/whatsapp-mcp/issues/78)) ([214780f](https://github.com/verygoodplugins/whatsapp-mcp/commit/214780f3d1cd4c45f04676b37913c1d60b46f445))
+
+## [0.2.0](https://github.com/verygoodplugins/whatsapp-mcp/compare/v0.1.0...v0.2.0) (2026-04-22)
+
+
+### Features
+
+* add image media support in webhook forwarding ([#45](https://github.com/verygoodplugins/whatsapp-mcp/issues/45)) ([c5f409c](https://github.com/verygoodplugins/whatsapp-mcp/commit/c5f409c78da8b7029b418e2fa428316dad7f970b))
+* **bridge:** --full-history-pair flag to request full history at pair time ([#37](https://github.com/verygoodplugins/whatsapp-mcp/issues/37)) ([2358dd5](https://github.com/verygoodplugins/whatsapp-mcp/commit/2358dd5cf8cda17110076446c73637eab23bc7c3))
+* **bridge:** capture incoming WhatsApp call events ([#39](https://github.com/verygoodplugins/whatsapp-mcp/issues/39)) ([197a0c9](https://github.com/verygoodplugins/whatsapp-mcp/commit/197a0c9de304b762db3e3a7fb98d9dd4ce510f74))
+
+
+### Bug Fixes
+
+* **bridge:** auto-download runs after StoreMessage to avoid lookup race ([#41](https://github.com/verygoodplugins/whatsapp-mcp/issues/41)) ([0c267f5](https://github.com/verygoodplugins/whatsapp-mcp/commit/0c267f5f0834138f54d7e2d731ffbd8f8deb5929))
+* **bridge:** handle StreamReplaced event to recover from session conflicts ([#27](https://github.com/verygoodplugins/whatsapp-mcp/issues/27)) ([0cd6475](https://github.com/verygoodplugins/whatsapp-mcp/commit/0cd647560705acbbb3d46b236e1e09df7b20ceee))
+* **bridge:** include message ID in media filenames to prevent same-second collisions ([#40](https://github.com/verygoodplugins/whatsapp-mcp/issues/40)) ([1e819c1](https://github.com/verygoodplugins/whatsapp-mcp/commit/1e819c1d67d7ed087ab3298253f4f987cd3e48e9))
+* **bridge:** resolve [@lid](https://github.com/lid) sender to phone JID in webhook payload ([#56](https://github.com/verygoodplugins/whatsapp-mcp/issues/56)) ([746fca0](https://github.com/verygoodplugins/whatsapp-mcp/commit/746fca03297438f12b53ad3df4d33a6200773a05))
+* **bridge:** surface image/video/document captions in extractTextContent ([#42](https://github.com/verygoodplugins/whatsapp-mcp/issues/42)) ([fbb3f28](https://github.com/verygoodplugins/whatsapp-mcp/commit/fbb3f283f0296a5f7e4aaf72eec2b99853de41b8))
+* **mcp:** match messages by both phone number and LID via whatsmeow_lid_map ([#43](https://github.com/verygoodplugins/whatsapp-mcp/issues/43)) ([04c8755](https://github.com/verygoodplugins/whatsapp-mcp/commit/04c875568424a125b3e824ba094427f8d899d7c3))
+* **mcp:** resolve contacts via whatsmeow store with LID → phone fallback ([#30](https://github.com/verygoodplugins/whatsapp-mcp/issues/30)) ([b9b0175](https://github.com/verygoodplugins/whatsapp-mcp/commit/b9b0175e6475d5402feedc190f44758045985992))
+* pin `anyio<4.9` to avoid cancel scope regression ([#44](https://github.com/verygoodplugins/whatsapp-mcp/issues/44)) ([627db67](https://github.com/verygoodplugins/whatsapp-mcp/commit/627db6746076108ba4ca370ff3f95420ccbb30ef))
+* security hardening for LAN exposure and Unicode search ([#55](https://github.com/verygoodplugins/whatsapp-mcp/issues/55)) ([8097f39](https://github.com/verygoodplugins/whatsapp-mcp/commit/8097f39dd4a19edd2ebab52d086704b528019005))
+
+
+### Documentation
+
+* add ROADMAP, AGENTS, CONTRIBUTING, CODEOWNERS, issue/PR templates ([#47](https://github.com/verygoodplugins/whatsapp-mcp/issues/47)) ([c2e4f5b](https://github.com/verygoodplugins/whatsapp-mcp/commit/c2e4f5b22cc3de42b4850222d3cc3ebfa4efbd14))
+* document WHATSMEOW_DB_PATH env var ([#51](https://github.com/verygoodplugins/whatsapp-mcp/issues/51)) ([c24d151](https://github.com/verygoodplugins/whatsapp-mcp/commit/c24d151c9ebe07c052fa1e3a3662c10795747280))
+* update remaining "go run main.go" references to "go run ." ([#50](https://github.com/verygoodplugins/whatsapp-mcp/issues/50)) ([53e1ca7](https://github.com/verygoodplugins/whatsapp-mcp/commit/53e1ca7dd2a470fd5f947f22ee667753cf7e6be6))
+
 ## 0.1.0 (2026-03-02)
 
 ### Added
