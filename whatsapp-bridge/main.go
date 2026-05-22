@@ -1139,6 +1139,12 @@ func sendWhatsAppMessage(client *whatsmeow.Client, messageStore *MessageStore, r
 
 	msg := &waProto.Message{}
 
+	// Captured from the media upload so the outbound row stores enough to
+	// re-download our own sent files later (PCC's /api/download path).
+	var storeURL string
+	var storeMediaKey, storeFileSHA256, storeFileEncSHA256 []byte
+	var storeFileLength uint64
+
 	// Check if we have media to send
 	if mediaPath != "" {
 		// Read media file
@@ -1156,6 +1162,12 @@ func sendWhatsAppMessage(client *whatsmeow.Client, messageStore *MessageStore, r
 		}
 
 		fmt.Println("Media uploaded", resp)
+
+		storeURL = resp.URL
+		storeMediaKey = resp.MediaKey
+		storeFileSHA256 = resp.FileSHA256
+		storeFileEncSHA256 = resp.FileEncSHA256
+		storeFileLength = resp.FileLength
 
 		// Create the appropriate message type based on media type
 		switch mediaType {
@@ -1303,7 +1315,7 @@ func sendWhatsAppMessage(client *whatsmeow.Client, messageStore *MessageStore, r
 		}
 		if storeErr := messageStore.StoreMessage(
 			resp.ID, chatJID, senderUser, message, timestamp, true,
-			mediaType, filename, "", nil, nil, nil, 0, quotedMsgID,
+			mediaType, filename, storeURL, storeMediaKey, storeFileSHA256, storeFileEncSHA256, storeFileLength, quotedMsgID,
 		); storeErr != nil {
 			fmt.Printf("Warning: failed to persist outbound message: %v\n", storeErr)
 		} else if err := messageStore.SetChatUnread(chatJID, 0, false); err != nil {
