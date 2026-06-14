@@ -161,6 +161,13 @@ func NewMessageStore() (*MessageStore, error) {
 }
 
 func ensureMessageStoreSchema(db *sql.DB) error {
+	if _, err := db.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_messages_chat_jid ON messages(chat_jid);
+		CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender);
+		CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp);
+	`); err != nil {
+		return fmt.Errorf("failed to ensure message indexes: %w", err)
+	}
 	if err := ensureColumn(db, "chats", "ephemeral_expiration", "INTEGER NOT NULL DEFAULT 0"); err != nil {
 		return fmt.Errorf("failed to ensure chats.ephemeral_expiration column: %w", err)
 	}
