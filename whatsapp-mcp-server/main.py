@@ -1,9 +1,11 @@
+import os
 import signal
 import sys
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
+from mcp_config import resolve_host, resolve_port, resolve_transport
 from whatsapp import (
     download_media as whatsapp_download_media,
 )
@@ -32,6 +34,9 @@ from whatsapp import (
     list_messages as whatsapp_list_messages,
 )
 from whatsapp import (
+    msg_to_dict,
+)
+from whatsapp import (
     search_contacts as whatsapp_search_contacts,
 )
 from whatsapp import (
@@ -43,8 +48,12 @@ from whatsapp import (
 from whatsapp import (
     send_message as whatsapp_send_message,
 )
+from whatsapp import (
+    send_reaction as whatsapp_send_reaction,
+)
 
-# Initialize FastMCP server
+# Initialize FastMCP server. Env-var handling is deferred to the __main__ block
+# so importing this module never parses env vars or exits the process.
 mcp = FastMCP("whatsapp")
 
 
@@ -284,17 +293,33 @@ def get_message_context(message_id: str, before: int = 5, after: int = 5) -> dic
         after: Number of messages to include after the target message (default 5)
     """
     context = whatsapp_get_message_context(message_id, before, after)
-    return context
+    return {
+        "message": msg_to_dict(context.message),
+        "before": [msg_to_dict(message) for message in context.before],
+        "after": [msg_to_dict(message) for message in context.after],
+    }
 
 
 @mcp.tool()
-def send_message(recipient: str, message: str) -> dict[str, Any]:
+def send_message(
+    recipient: str,
+    message: str,
+    quoted_message_id: str = "",
+    quoted_sender_jid: str = "",
+    quoted_content: str = "",
+) -> dict[str, Any]:
     """Send a WhatsApp message to a person or group. For group chats use the JID.
 
     Args:
         recipient: The recipient - either a phone number with country code but no + or other symbols,
                  or a JID (e.g., "123456789@s.whatsapp.net" or a group JID like "123456789@g.us")
         message: The message text to send
+        quoted_message_id: ID of the message to reply to (optional). When set, the sent
+                           message will appear as a quoted reply in WhatsApp.
+        quoted_sender_jid: Full JID of the author of the quoted message. Required for
+                           group replies so WhatsApp renders the correct attribution.
+        quoted_content: Text content of the quoted message, used for the reply preview.
+                        Only plain text is supported; media previews are not included.
 
     Returns:
         A dictionary containing success status and a status message
@@ -304,7 +329,35 @@ def send_message(recipient: str, message: str) -> dict[str, Any]:
         return {"success": False, "message": "Recipient must be provided"}
 
     # Call the whatsapp_send_message function with the unified recipient parameter
-    success, status_message = whatsapp_send_message(recipient, message)
+    success, status_message = whatsapp_send_message(
+        recipient, message, quoted_message_id, quoted_sender_jid, quoted_content
+    )
+    return {"success": success, "message": status_message}
+
+
+@mcp.tool()
+def send_reaction(
+    recipient: str,
+    message_id: str,
+    emoji: str,
+    from_me: bool = False,
+    sender_jid: str = "",
+) -> dict[str, Any]:
+    """Send (or remove) a reaction to a WhatsApp message.
+
+    Args:
+        recipient: The chat JID the message belongs to (e.g., "12025551234@s.whatsapp.net"
+                   or a group JID like "123456789@g.us")
+        message_id: The ID of the message to react to
+        emoji: The reaction emoji (e.g., "👍"). Pass an empty string to remove the reaction.
+        from_me: Whether the original message was sent by the current user (default False)
+        sender_jid: JID of the original message sender — required for group messages when
+                    from_me is False so the bridge can build the correct WhatsApp key
+
+    Returns:
+        A dictionary containing success status and a status message
+    """
+    success, status_message = whatsapp_send_reaction(recipient, message_id, emoji, from_me, sender_jid)
     return {"success": success, "message": status_message}
 
 
@@ -371,5 +424,20 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, shutdown_handler)
     signal.signal(signal.SIGTERM, shutdown_handler)
 
-    # Initialize and run the server
-    mcp.run(transport="stdio")
+    # Resolve the transport first: host/port are only used (and validated) for the
+    # network transports, so a bad WHATSAPP_MCP_PORT can't break a stdio launch.
+    # The localhost default keeps a remote server unreachable until explicitly opened up.
+    try:
+        transport = resolve_transport(os.getenv("WHATSAPP_MCP_TRANSPORT"))
+        if transport != "stdio":
+            mcp.settings.host = resolve_host(os.getenv("WHATSAPP_MCP_HOST"))
+            mcp.settings.port = resolve_port(os.getenv("WHATSAPP_MCP_PORT"))
+            # stdout is reserved for the protocol on stdio; log startup to stderr.
+            print(
+                f"WhatsApp MCP server listening on {mcp.settings.host}:{mcp.settings.port} via {transport}",
+                file=sys.stderr,
+            )
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+
+    mcp.run(transport=transport)
