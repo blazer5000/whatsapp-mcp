@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -284,6 +285,54 @@ func TestResolveRecipientJIDResolvesPhoneToCachedLID(t *testing.T) {
 
 	if got != lidJID {
 		t.Fatalf("expected cached LID %s, got %s", lidJID, got)
+	}
+}
+
+func TestReadReceiptTargetsUseReplyCutoffAndLatestInboundPerSender(t *testing.T) {
+	ms := newTestMessageStore(t)
+	chatJID := "120363012345678901@g.us"
+	if err := ms.StoreChat(chatJID, "Test group", time.Unix(40, 0)); err != nil {
+		t.Fatalf("store chat: %v", err)
+	}
+	for _, message := range []struct {
+		id       string
+		sender   string
+		second   int64
+		fromSelf bool
+	}{
+		{"alice-old", "15550000001", 10, false},
+		{"bob-latest", "15550000002", 12, false},
+		{"alice-latest", "15550000001", 15, false},
+		{"reply", "15559999999", 20, true},
+		{"after-reply", "15550000001", 30, false},
+	} {
+		if err := ms.StoreMessage(message.id, chatJID, message.sender, message.id, time.Unix(message.second, 0), message.fromSelf, "", "", "", nil, nil, nil, 0, ""); err != nil {
+			t.Fatalf("store %s: %v", message.id, err)
+		}
+	}
+
+	cutoff, targets, err := ms.ReadReceiptTargets(chatJID, 20)
+	if err != nil {
+		t.Fatalf("ReadReceiptTargets: %v", err)
+	}
+	if !cutoff.Equal(time.Unix(20, 0)) {
+		t.Fatalf("cutoff = %v, want reply time", cutoff)
+	}
+	got := map[string]string{}
+	for _, target := range targets {
+		got[target.Sender] = string(target.ID)
+	}
+	want := map[string]string{"15550000001": "alice-latest", "15550000002": "bob-latest"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("targets = %#v, want %#v", got, want)
+	}
+
+	unread, err := ms.CountInboundAfterTime(chatJID, cutoff)
+	if err != nil {
+		t.Fatalf("CountInboundAfterTime: %v", err)
+	}
+	if unread != 1 {
+		t.Fatalf("newer unread count = %d, want 1", unread)
 	}
 }
 
