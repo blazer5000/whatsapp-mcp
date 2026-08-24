@@ -88,6 +88,8 @@ func newTestMessageStore(t *testing.T) *MessageStore {
 			jid TEXT PRIMARY KEY,
 			name TEXT,
 			last_message_time TIMESTAMP,
+			unread_count INTEGER NOT NULL DEFAULT 0,
+			marked_unread BOOLEAN NOT NULL DEFAULT false,
 			ephemeral_expiration INTEGER NOT NULL DEFAULT 0,
 			ephemeral_setting_timestamp INTEGER NOT NULL DEFAULT 0
 		);
@@ -698,6 +700,31 @@ func TestHandleMessage_OutgoingLIDMessage_StoredUnderPhoneJID(t *testing.T) {
 
 	if count := queryMessageCount(ms, phoneLID.String()); count != 0 {
 		t.Errorf("expected 0 messages under LID JID %s, got %d", phoneLID, count)
+	}
+}
+
+func TestHandleMessage_OutgoingMessagePreservesUnread(t *testing.T) {
+	client := newTestClient(&mockLIDStore{})
+	ms := newTestMessageStore(t)
+	logger := testLogger()
+
+	incoming := buildTextMessage(phonePN, phonePN, types.EmptyJID, types.EmptyJID, false, "Buyer enquiry")
+	incoming.Info.ID = "incoming"
+	incoming.Info.Timestamp = time.Unix(10, 0)
+	handleMessage(client, ms, incoming, logger)
+
+	outgoing := buildTextMessage(phonePN, phonePN, types.EmptyJID, types.EmptyJID, true, "Automatic greeting")
+	outgoing.Info.ID = "automatic-greeting"
+	outgoing.Info.Timestamp = time.Unix(12, 0)
+	handleMessage(client, ms, outgoing, logger)
+
+	var unreadCount int
+	var markedUnread bool
+	if err := ms.db.QueryRow("SELECT unread_count, marked_unread FROM chats WHERE jid = ?", phonePN.String()).Scan(&unreadCount, &markedUnread); err != nil {
+		t.Fatalf("load unread state: %v", err)
+	}
+	if unreadCount != 1 || !markedUnread {
+		t.Fatalf("unread state after outbound = (%d, %t), want (1, true)", unreadCount, markedUnread)
 	}
 }
 

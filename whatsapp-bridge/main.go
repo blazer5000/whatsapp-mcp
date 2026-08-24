@@ -1803,15 +1803,9 @@ func handleMessage(client *whatsmeow.Client, messageStore *MessageStore, msg *ev
 	)
 	if err != nil {
 		logger.Warnf("Failed to store message: %v", err)
-	} else {
-		if msg.Info.IsFromMe {
-			if err := messageStore.SetChatUnread(chatJID, 0, false); err != nil {
-				logger.Warnf("Failed to clear unread for outbound chat %s: %v", chatJID, err)
-			}
-		} else {
-			if err := messageStore.IncrementChatUnread(chatJID); err != nil {
-				logger.Warnf("Failed to increment unread for chat %s: %v", chatJID, err)
-			}
+	} else if !msg.Info.IsFromMe {
+		if err := messageStore.IncrementChatUnread(chatJID); err != nil {
+			logger.Warnf("Failed to increment unread for chat %s: %v", chatJID, err)
 		}
 	}
 
