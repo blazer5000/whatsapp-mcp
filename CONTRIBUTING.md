@@ -1,82 +1,46 @@
 # Contributing
 
-Thanks for your interest in `verygoodplugins/whatsapp-mcp`. This fork is small and intentionally narrow — please read [`ROADMAP.md`](./ROADMAP.md) and [`AGENTS.md`](./AGENTS.md) before opening a PR.
+These instructions apply to `blazer5000/whatsapp-mcp`. Verify the actual repository and `origin`; upstream `verygoodplugins/whatsapp-mcp` and `lharries/whatsapp-mcp` references preserve provenance, not the destination for this fork's issues or PRs.
 
-## TL;DR
+## Scope and Workflow
 
-- **Open an issue first** for anything bigger than a clear bug fix.
-- **One concern per PR**, conventional-commit title, ≤ ~300 LOC where possible.
-- **Required CI checks green** (lint, tests, CodeQL, version consistency); `bandit`, `pip-audit`, and `govulncheck` run as informational security scans — investigate findings even though they don't currently fail the build.
-- **Update docs** in the same PR as user-visible changes.
+Read `ROADMAP.md` for scope and `AGENTS.md` for code ownership and safeguards. Discuss material new scope first; the existing approximately 300-line PR guideline is a review signal, not a source-file limit. An explicitly requested bounded change is already discussed scope.
 
-## Setup
+Use one concern per branch/PR, with an observable outcome, reproduction or acceptance examples, focused regression proof and explicit exclusions. Features reference an issue. Keep changes independently reviewable; avoid drive-by formatting and unrelated dependency upgrades. State the justification for new dependencies.
+
+Use conventional commit/PR titles: `feat`, `fix`, `chore`, `docs`, `ci`, `refactor`, `test` or `perf`; identify breaking changes explicitly. Stage intended files only. Before merge, review the complete diff, disclose security-sensitive changes, resolve introduced failures and satisfy configured required checks and review requirements. Merge/publication needs maintainer authorization.
+
+## Verification Commands
+
+Inspect current manifests and test setup; use synthetic data, not paired accounts or live messages. Focus checks while editing, then run the applicable component gate once after executable changes settle.
+
+Go bridge:
 
 ```bash
-git clone https://github.com/verygoodplugins/whatsapp-mcp.git
-cd whatsapp-mcp
-
-# Bridge
 cd whatsapp-bridge
-go run .           # scan QR to pair
-
-# MCP server (separate terminal)
-cd ../whatsapp-mcp-server
-uv sync --extra dev
-uv run main.py
+go test ./...
+go build ./...
+golangci-lint run
 ```
 
-## Workflow
+Python MCP server:
 
-1. **Discuss** — open or comment on an issue. Confirm scope (`ROADMAP.md`).
-2. **Branch** — fork or push to a branch named `<type>/<short-slug>`, e.g. `fix/lid-sender-filter`, `feat/typing-indicator`.
-3. **Commit** — use [Conventional Commits](https://www.conventionalcommits.org/):
-   - `feat:` user-visible feature → minor bump
-   - `fix:` user-visible bug fix → patch bump
-   - `chore:`, `docs:`, `ci:`, `refactor:`, `test:`, `perf:` → no version bump
-   - `feat!:` / `fix!:` / `BREAKING CHANGE:` in body → major bump
-4. **Test locally** — `uv run pytest`, `golangci-lint run`, `go build ./...`.
-5. **Open a PR** to `main` against `verygoodplugins/whatsapp-mcp`. Use the PR template.
-6. **Iterate** — address review comments. Squash isn't required; meaningful commit history is fine.
-7. **Merge** — maintainers merge once CI is green and at least one approving review is in. Release-please cuts the next release automatically.
+```bash
+cd whatsapp-mcp-server
+uv sync --extra dev
+uv run pytest -v
+uv run ruff check .
+uv run ruff format --check .
+```
 
-## What gets merged quickly
+Run each block from the repository root. Bridge/MCP contract changes require both affected sides. Security-sensitive changes need relevant auth, path-containment, binding and rejected-input cases. No live send or session reset is authorized by this checklist.
 
-- Small, focused bug fixes with a clear reproduction.
-- Test additions for existing code.
-- Documentation improvements.
-- Dependency updates (most are auto-handled by Dependabot).
-- Reliability fixes for the Go bridge (reconnect, race conditions, JID resolution).
+For prose-only changes, review source accuracy, links, ownership and consistency; do not claim a new application test result. Do not bypass configured required GitHub checks. Full logs stay outside routine agent context; report exact commands/results and blocked or unverified coverage.
 
-## What needs more discussion
+Workflow files under `.github/workflows/` and current branch rules own the actual CI gate; do not maintain a second stale job inventory here. Investigate informational security findings even when they do not block CI. Never waive an introduced failure merely because another job passed.
 
-- New MCP tools (need a real-world use case + tool description).
-- New env vars or CLI flags.
-- Schema changes to `messages.db`.
-- Anything touching the webhook payload shape.
-- Anything touching authentication or network bind defaults.
+## Documentation and Releases
 
-## What we'll likely close
+Update only documentation whose truth changed. Configuration examples belong in `.env.example` and user-facing README guidance; do not repeat environment tables in AGENTS. Keep current commands here, product scope in ROADMAP and release/version behaviour in `docs/RELEASING.md`.
 
-- Multi-account / multi-tenant support.
-- Plugin systems, extension points.
-- Hosted-SaaS or web-UI features.
-- Massive refactors with no behavior change.
-- Mega-PRs (> ~500 LOC) without a prior issue.
-
-(See `ROADMAP.md` for the full out-of-scope list.)
-
-## Code style
-
-- **Python:** ruff for lint and format. Type hints on public functions.
-- **Go:** golangci-lint must pass. Standard `gofmt`. Add comments for non-obvious behavior, not for "what the code does".
-- **Tests:** pytest in Python, standard `testing` in Go.
-
-## Security
-
-If you find a vulnerability, **please don't open a public issue**. Email security@verygoodplugins.com (or open a private security advisory on GitHub) with details.
-
-## Credit
-
-If a contribution is non-trivial, your name lands in the release notes (auto-generated). Significant ongoing contributors may be invited as repo collaborators.
-
-Thanks for keeping this project small, sharp, and useful.
+Follow Release Please rather than editing generated versions or changelog entries. Use `SECURITY.md` for private vulnerability reporting; ordinary issues must exclude tokens, sessions, message content and other private information. Preserve upstream attribution and licence terms.
